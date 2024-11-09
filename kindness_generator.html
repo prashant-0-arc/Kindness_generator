@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Acts of Kindness Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .suggestion-card {
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.3s forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+            transform: translateY(0);
+            opacity: 1;
+            }
+        }
+
+        .number-input {
+            width: 60px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+        }
+
+        .number-input::-webkit-inner-spin-button,
+        .number-input::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+
+        .environment-button {
+            transition: all 0.2s;
+        }
+
+        .environment-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .environment-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                ❤️ Random Acts of Kindness Generator
+            </h1>
+            <p class="text-gray-600">
+                Select an environment and choose how many suggestions you'd like
+            </p>
+        </div>
+
+        <!-- Number of Suggestions Selector -->
+        <div class="mb-8">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Number of Suggestions:
+            </label>
+            <div class="flex items-center justify-center gap-4">
+                <button onclick="adjustCount(-1)" class="px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200">-</button>
+                <input type="number" id="suggestionCount" value="2" min="1" max="5" class="number-input">
+                <button onclick="adjustCount(1)" class="px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200">+</button>
+            </div>
+        </div>
+
+        <!-- Environment Buttons -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <button onclick="selectEnvironment('home')" class="environment-button p-4 rounded-lg border border-gray-200 hover:border-blue-500">
+                🏠 Home
+            </button>
+            <button onclick="selectEnvironment('work')" class="environment-button p-4 rounded-lg border border-gray-200 hover:border-blue-500">
+                💼 Work
+            </button>
+            <button onclick="selectEnvironment('public')" class="environment-button p-4 rounded-lg border border-gray-200 hover:border-blue-500">
+                🌍 Public
+            </button>
+            <button onclick="selectEnvironment('online')" class="environment-button p-4 rounded-lg border border-gray-200 hover:border-blue-500">
+                💻 Online
+            </button>
+        </div>
+
+        <!-- Suggestions Container -->
+        <div id="suggestionsContainer" class="space-y-4"></div>
+
+        <!-- Add New Suggestion -->
+        <div class="mt-8 space-y-4" id="addSuggestionForm" style="display: none;">
+            <input type="text" id="newSuggestion" placeholder="Enter your suggestion..." 
+                   class="w-full p-2 border rounded-md">
+            <button onclick="addNewSuggestion()" 
+                    class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600">
+                Add Suggestion
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const suggestions = {
+            home: [
+                "Help with household chores without being asked",
+                "Cook a nice meal for your family",
+                "Surprise someone with a home-cooked treat",
+                "Leave a loving note for a family member",
+                "Organize a shared space in the house",
+                "Water the plants or tend to the garden",
+                "Make someone's bed for them",
+                "Fix something that's been broken",
+                "Create a relaxing atmosphere with music or candles"
+            ],
+            work: [
+                "Compliment a colleague on a job well done",
+                "Offer to help a coworker with a project",
+                "Bring coffee or tea for your team",
+                "Share credit for a successful project",
+                "Mentor a junior colleague",
+                "Clean the break room or shared space",
+                "Start a wellness initiative",
+                "Leave positive sticky notes on desks",
+                "Organize a team celebration"
+            ],
+            public: [
+                "Smile at strangers and hold doors open",
+                "Pay for the person behind you in line",
+                "Pick up trash you find in the park or street",
+                "Give directions to someone who looks lost",
+                "Let someone go ahead of you in line",
+                "Leave coins at a vending machine",
+                "Give a sincere compliment to a service worker",
+                "Help someone carry their groceries",
+                "Leave positive reviews for local businesses"
+            ],
+            online: [
+                "Send a thoughtful message to an old friend",
+                "Share an inspiring post or quote",
+                "Write a positive review for a small business",
+                "Share someone's creative work with credit",
+                "Offer encouragement on social media",
+                "Send digital gift cards to friends in need",
+                "Create helpful content to share freely",
+                "Respond kindly to someone seeking advice",
+                "Share educational resources with others"
+            ]
+        };
+
+        let currentEnvironment = '';
+
+        function adjustCount(change) {
+            const input = document.getElementById('suggestionCount');
+            let newValue = parseInt(input.value) + change;
+            newValue = Math.min(Math.max(newValue, 1), 5);
+            input.value = newValue;
+            if (currentEnvironment) {
+                generateSuggestions(currentEnvironment);
+            }
+        }
+
+        function selectEnvironment(environment) {
+            currentEnvironment = environment;
+            
+            // Update active button state
+            document.querySelectorAll('.environment-button').forEach(button => {
+                button.classList.remove('active');
+                if (button.textContent.toLowerCase().includes(environment)) {
+                    button.classList.add('active');
+                }
+            });
+
+            generateSuggestions(environment);
+            document.getElementById('addSuggestionForm').style.display = 'block';
+        }
+
+        function generateSuggestions(environment) {
+            const count = parseInt(document.getElementById('suggestionCount').value);
+            const container = document.getElementById('suggestionsContainer');
+            container.innerHTML = '';
+
+            // Get random suggestions
+            const availableSuggestions = [...suggestions[environment]];
+            const selectedSuggestions = [];
+            
+            for (let i = 0; i < Math.min(count, availableSuggestions.length); i++) {
+                const randomIndex = Math.floor(Math.random() * availableSuggestions.length);
+                selectedSuggestions.push(availableSuggestions.splice(randomIndex, 1)[0]);
+            }
+
+            // Create suggestion elements
+            selectedSuggestions.forEach(suggestion => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-card p-4 bg-blue-50 rounded-lg flex items-start gap-2';
+                div.innerHTML = `
+                    <span class="text-red-500 flex-shrink-0">❤️</span>
+                    <p class="text-gray-800">${suggestion}</p>
+                `;
+                container.appendChild(div);
+            });
+
+            // Add refresh button
+            const refreshButton = document.createElement('button');
+            refreshButton.className = 'mt-4 mx-auto block px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200';
+            refreshButton.innerHTML = '🔄 New Suggestions';
+            refreshButton.onclick = () => generateSuggestions(environment);
+            container.appendChild(refreshButton);
+        }
+
+        function addNewSuggestion() {
+            const input = document.getElementById('newSuggestion');
+            const suggestion = input.value.trim();
+            
+            if (suggestion && currentEnvironment) {
+                suggestions[currentEnvironment].push(suggestion);
+                input.value = '';
+                
+                // Show success message
+                const message = document.createElement('div');
+                message.className = 'suggestion-card p-4 bg-green-100 rounded-lg text-green-800 text-center mt-4';
+                message.textContent = 'Your suggestion has been added!';
+                document.getElementById('addSuggestionForm').appendChild(message);
+                
+                // Remove message after 3 seconds
+                setTimeout(() => message.remove(), 3000);
+                
+                // Regenerate suggestions
+                generateSuggestions(currentEnvironment);
+            }
+        }
+
+        // Initialize
+        document.getElementById('suggestionCount').addEventListener('change', (e) => {
+            if (currentEnvironment) {
+                generateSuggestions(currentEnvironment);
+            }
+        });
+    </script>
+</body>
+</html>
